@@ -5,7 +5,6 @@ import emoji
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import nltk
-from langdetect import detect
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -34,7 +33,6 @@ if __name__ == "__main__":
     
     data_filtered = data[data['word_count'] > 5].copy()
     data_filtered.reset_index(drop=True, inplace=True)
-    data_filtered['lang'] = data_filtered['clean_text'].apply(lambda x: detect(x) if len(x) > 0 else 'unknown')
     data_filtered.drop(columns=['word_count'], inplace=True)
     
     data_filtered.to_csv('data/youtube_comments_cleaned.csv', index=False)

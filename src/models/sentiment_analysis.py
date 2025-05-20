@@ -6,6 +6,8 @@ from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassifica
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import os
+import re
+from collections import Counter
 import mlflow
 import logging
 
@@ -82,7 +84,7 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
 
         data[['sentiment', 'confidence']] = data['sentiment_result'].apply(
             lambda x: pd.Series([x['label'], x['confidence']])
-        )
+        ).fillna({'label': 'neutral', 'confidence': 0.0})
 
         data.drop(columns=['sentiment_result'], inplace=True)
         
@@ -95,6 +97,15 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
         sentiment_counts = data['sentiment'].value_counts(normalize=True) * 100
         print("\nSentiment Distribution (%):")
         print(sentiment_counts)
+
+        # Generate summary
+        summary = generate_contextual_summary(data)
+
+        # Simpan ke file
+        summary_path = "results/summary.txt"
+        os.makedirs("results", exist_ok=True)
+        with open(summary_path, "w") as f:
+            f.write(summary)
         
         # 6. Simpan Hasil
         data.to_csv(output_path, index=False)
@@ -107,14 +118,16 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
             for label, value in sentiment_counts.items():
                 mlflow.log_metric(f"percentage_{label}", value)
 
-            summary = {
-                "total_comments": len(data),
-                "positive_comments": len(data[data['sentiment'] == 'positive']),
-                "neutral_comments": len(data[data['sentiment'] == 'neutral']),
-                "negative_comments": len(data[data['sentiment'] == 'negative'])
-            }
+            # summary = {
+            #     "total_comments": len(data),
+            #     "positive_comments": len(data[data['sentiment'] == 'positive']),
+            #     "neutral_comments": len(data[data['sentiment'] == 'neutral']),
+            #     "negative_comments": len(data[data['sentiment'] == 'negative'])
+            # }
 
-            mlflow.log_dict(summary, "summary.json")
+            # mlflow.log_dict(summary, "summary.json")
+
+            mlflow.log_artifact(summary_path, artifact_path="summary")
             
             # log model to mlflow
             mlflow.transformers.log_model(
@@ -122,7 +135,8 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
                     "model": model,
                     "tokenizer": tokenizer
                 },
-                artifact_path="models/sentiment_model"
+                artifact_path="models/sentiment_model",
+                pip_requirements=["torch==2.6.0+cpu", "mlflow"]
             )
             
             visualize_sentiment(data, output_dir="results/visualizations")
@@ -137,14 +151,61 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
         logging.error(f"Error during sentiment analysis: {str(e)}")
         print(f"An error occurred: {str(e)}")
         return None
+    
+def extract_top_words(text_series, n=5):
+    all_text = ' '.join(text_series.astype(str).str.lower().tolist())
+    all_text = re.sub(r'[^a-zA-Z\s]', '', all_text)
+    words = all_text.split()
+    return [word for word, _ in Counter(words).most_common(n)]
+
+def generate_contextual_summary(df):
+    total_comments = len(df)
+    sentiment_counts = df['sentiment'].value_counts(normalize=True) * 100
+
+    positive_pct = sentiment_counts.get('positive', 0)
+    negative_pct = sentiment_counts.get('negative', 0)
+    neutral_pct = sentiment_counts.get('neutral', 0)
+
+    # Ekstrak topik/kata kunci
+    top_words_positive = extract_top_words(df[df['sentiment'] == 'positive']['clean_text'], n=3)
+    top_words_negative = extract_top_words(df[df['sentiment'] == 'negative']['clean_text'], n=3)
+    top_words_all = extract_top_words(df['clean_text'], n=5)
+
+    # Buat paragraf ringkasan
+    summary = (
+        f"Dari {total_comments} komentar yang dianalisis, "
+        f"{positive_pct:.1f}% penonton memberikan respon positif, "
+        f"{negative_pct:.1f}% negatif, dan "
+        f"{neutral_pct:.1f}% netral. "
+    )
+
+    if len(top_words_positive) > 0:
+        summary += (
+            f"Banyak penonton menyukai video karena hal-hal seperti "
+            f"`{top_words_positive[0]}` dan `{top_words_positive[1]}`. "
+        )
+    
+    if len(top_words_negative) > 0:
+        summary += (
+            f"Namun, beberapa penonton menyampaikan kritik terkait "
+            f"`{top_words_negative[0]}` dan `{top_words_negative[1]}`. "
+        )
+
+    summary += (
+        f"Beberapa kata yang sering muncul dalam komentar antara lain: "
+        f"`{'`, `'.join(top_words_all[:5])}`."
+    )
+
+    return summary
 
 def visualize_sentiment(df, output_dir="results/visualizations"):
     os.makedirs(output_dir, exist_ok=True)
 
     # 1️⃣ Pie Chart - Distribusi Sentimen
-    plt.figure(figsize=(8, 6))
     sentiment_counts = df['sentiment'].value_counts()
     colors = {"positive": "green", "neutral": "gray", "negative": "red"}
+    
+    plt.figure(figsize=(8, 6))
     plt.pie(sentiment_counts, labels=sentiment_counts.index, autopct='%1.1f%%', colors=[colors[label] for label in sentiment_counts.index])
     plt.title('Distribusi Sentimen Komentar YouTube')
     plt.axis('equal')
@@ -165,8 +226,8 @@ def visualize_sentiment(df, output_dir="results/visualizations"):
 
 
 def generate_wordcloud(text, save_path, title="Word Cloud"):
-    stopwords = set()
-    wordcloud = WordCloud(width=800, height=400, background_color='white', stopwords=stopwords).generate(text)
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+    
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis("off")

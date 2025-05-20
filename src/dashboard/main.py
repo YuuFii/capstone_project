@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import pandas as pd
 from nltk.corpus import stopwords
+import os
 
 API_URL = "http://localhost:8000"
 
@@ -96,6 +97,17 @@ with tab3:
         st.warning("Belum ada data analisis. Lakukan analisis terlebih dahulu.")
     else:
         df = pd.DataFrame(st.session_state['analysis_data'])
+
+        # Tampilkan summary
+        st.markdown("### 📝 Ringkasan Kontekstual")
+        summary_path = "results/summary.txt"
+
+        if os.path.exists(summary_path):
+            with open(summary_path, "r") as f:
+                summary = f.read()
+            st.info(summary)
+        else:
+            st.warning("Tidak ada ringkasan tersedia.")
 
         # Tampilkan sampel data
         st.markdown("### 🔍 Sampel Data")

@@ -3,4 +3,8 @@ env/
 
 __pycache__/
 mlruns/
-mlartiacts/
+mlartifacts/
+
+logs/
+
+*.csv

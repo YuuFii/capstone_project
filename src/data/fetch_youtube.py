@@ -9,12 +9,6 @@ API_KEY = os.getenv("YOUTUBE_API_KEY")
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
-youtube = build(
-    YOUTUBE_API_SERVICE_NAME,
-    YOUTUBE_API_VERSION,
-    developerKey=API_KEY
-)
-
 def get_comments_from_video(youtube, video_id, all_comments, max_comments=None):
     """
     Fetch comments from a YouTube video using the YouTube Data API.
@@ -68,7 +62,7 @@ def get_comments_from_video(youtube, video_id, all_comments, max_comments=None):
 
     return all_comments
 
-def get_comments_from_videos(video_ids: list, max_comments_per_video=None, output_file="data/youtube_comments.csv"):
+def get_comments_from_videos(video_ids: list, api_key, max_comments_per_video=None, output_file="data/youtube_comments.csv"):
     """
     Fetch comments from a list of YouTube videos and save them to a CSV.
     
@@ -78,6 +72,12 @@ def get_comments_from_videos(video_ids: list, max_comments_per_video=None, outpu
         output_file (str): Path to save the output CSV.
     """
     all_comments = []
+
+    youtube = build(
+        YOUTUBE_API_SERVICE_NAME,
+        YOUTUBE_API_VERSION,
+        developerKey=api_key
+    )   
 
     for video_id in tqdm(video_ids, desc="Fetching comments"):
         print(f"Fetching comments for video ID: {video_id}...")
@@ -98,7 +98,7 @@ def get_comments_from_videos(video_ids: list, max_comments_per_video=None, outpu
     df = pd.DataFrame(all_comments)
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     df.to_csv(output_file, index=False)
-    print(f"Comments saved to {output_file}")
+    print(f"[FETCH] Comments saved to {output_file}")
     
 if __name__ == "__main__":
     # Example usage
@@ -108,5 +108,5 @@ if __name__ == "__main__":
         "B-9kUM7nsUU",
     ]
 
-    get_comments_from_videos(video_ids, max_comments_per_video=None, output_file="data/youtube_comments.csv")
+    get_comments_from_videos(video_ids, api_key=API_KEY, max_comments_per_video=None, output_file="data/youtube_comments.csv")
 

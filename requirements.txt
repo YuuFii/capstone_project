@@ -6,6 +6,9 @@ seaborn
 
 transformers
 datasets
+sentencepiece
+
+hf-xet
 
 tqdm
 beautifulsoup4

@@ -1,0 +1,22 @@
+2025-05-12 13:45:41,678 - ERROR - Error during sentiment analysis: Invalid dictionary submitted for 'transformers_model'. The key(s) ['pipeline'] are not permitted. Must be one of: {'feature_extractor', 'model', 'tokenizer', 'torch_dtype', 'image_processor'}
+2025-05-14 06:01:54,327 - INFO - file_cache is only supported with oauth2client<4.0.0
+2025-05-14 06:05:06,054 - INFO - file_cache is only supported with oauth2client<4.0.0
+2025-05-14 06:09:26,501 - ERROR - Error during sentiment analysis: No module named 'torchvision'
+2025-05-14 06:15:11,272 - ERROR - Error during sentiment analysis: No module named 'torchvision'
+2025-05-14 06:37:18,314 - INFO - file_cache is only supported with oauth2client<4.0.0
+2025-05-14 06:38:28,604 - ERROR - Error during sentiment analysis: No module named 'torchvision'
+2025-05-18 05:00:15,387 - INFO - file_cache is only supported with oauth2client<4.0.0
+2025-05-18 05:00:47,046 - ERROR - Error during sentiment analysis: No module named 'torchvision'
+2025-05-18 05:00:47,139 - INFO - file_cache is only supported with oauth2client<4.0.0
+2025-05-18 05:01:00,604 - ERROR - Error during sentiment analysis: No module named 'torchvision'
+2025-05-18 05:25:18,060 - INFO - file_cache is only supported with oauth2client<4.0.0
+2025-05-18 05:25:46,337 - ERROR - Error during sentiment analysis: No module named 'torchvision'
+2025-05-18 05:25:46,439 - INFO - file_cache is only supported with oauth2client<4.0.0
+2025-05-18 05:25:59,406 - ERROR - Error during sentiment analysis: No module named 'torchvision'
+2025-05-18 06:11:20,423 - WARNING - Retrying (Retry(total=6, connect=6, read=7, redirect=7, status=7)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x742a23b9b410>: Failed to establish a new connection: [Errno 111] Connection refused')': /api/2.0/mlflow/experiments/get-by-name?experiment_name=Sentiment+Analysis+Experiment
+2025-05-18 06:11:25,121 - WARNING - Retrying (Retry(total=5, connect=5, read=7, redirect=7, status=7)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x742a23d5efc0>: Failed to establish a new connection: [Errno 111] Connection refused')': /api/2.0/mlflow/experiments/get-by-name?experiment_name=Sentiment+Analysis+Experiment
+2025-05-18 06:11:33,865 - WARNING - Retrying (Retry(total=4, connect=4, read=7, redirect=7, status=7)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x742a239faf30>: Failed to establish a new connection: [Errno 111] Connection refused')': /api/2.0/mlflow/experiments/get-by-name?experiment_name=Sentiment+Analysis+Experiment
+2025-05-18 06:11:50,318 - WARNING - Retrying (Retry(total=3, connect=3, read=7, redirect=7, status=7)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x742a23a21040>: Failed to establish a new connection: [Errno 111] Connection refused')': /api/2.0/mlflow/experiments/get-by-name?experiment_name=Sentiment+Analysis+Experiment
+2025-05-18 06:12:22,710 - WARNING - Retrying (Retry(total=2, connect=2, read=7, redirect=7, status=7)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x742a23a21730>: Failed to establish a new connection: [Errno 111] Connection refused')': /api/2.0/mlflow/experiments/get-by-name?experiment_name=Sentiment+Analysis+Experiment
+2025-05-18 06:13:26,990 - WARNING - Retrying (Retry(total=1, connect=1, read=7, redirect=7, status=7)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x742a23a218b0>: Failed to establish a new connection: [Errno 111] Connection refused')': /api/2.0/mlflow/experiments/get-by-name?experiment_name=Sentiment+Analysis+Experiment
+2025-05-18 06:15:26,991 - WARNING - Retrying (Retry(total=0, connect=0, read=7, redirect=7, status=7)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x742a23a21a30>: Failed to establish a new connection: [Errno 111] Connection refused')': /api/2.0/mlflow/experiments/get-by-name?experiment_name=Sentiment+Analysis+Experiment

@@ -4,6 +4,9 @@ scikit-learn
 matplotlib
 seaborn
 
+torch
+torchvision
+torchaudio
 transformers
 datasets
 sentencepiece
@@ -14,6 +17,9 @@ tqdm
 beautifulsoup4
 regex
 nltk
+indonlp
+emoji
+unidecode
 
 mlflow
 python-dotenv
@@ -22,6 +28,8 @@ google-api-python-client
 
 fastapi
 uvicorn
+pydantic
+typing
 
 wordcloud
 streamlit

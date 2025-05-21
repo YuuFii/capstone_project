@@ -4,9 +4,13 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import pandas as pd
 from nltk.corpus import stopwords
+import nltk
 import os
 
-API_URL = "http://localhost:8000"
+nltk.download('stopwords')
+
+API_URL = os.getenv("API_URL", "http://localhost:8000")
+
 
 st.set_page_config(page_title="YouTube Sentiment Analyzer", layout="wide")
 st.title("🎥 YouTube Sentiment Analyzer")

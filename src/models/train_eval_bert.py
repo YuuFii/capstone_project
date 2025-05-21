@@ -2,7 +2,7 @@ import os
 import argparse
 import mlflow
 import torch
-from datasets import load_dataset, Dataset
+from datasets import load_dataset
 from transformers import AutoModelForSequenceClassification
 from transformers import TFAutoModelForSequenceClassification
 from transformers import AutoTokenizer, AutoConfig

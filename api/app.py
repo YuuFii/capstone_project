@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Union
+from typing import List
 import requests
 import src.data.fetch_youtube as fetch
 import src.models.sentiment_analysis as sentiment

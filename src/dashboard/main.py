@@ -6,6 +6,8 @@ import pandas as pd
 from nltk.corpus import stopwords
 import nltk
 import os
+from datetime import datetime, timezone
+from src.data.db import get_collection
 
 nltk.download('stopwords')
 
@@ -150,3 +152,20 @@ with tab3:
 
         for comment in filtered_comments[:10]:  # Tampilkan maksimal 10 komentar
             st.markdown(f"- {comment}")
+
+        # Feedback pengguna
+        st.markdown("### 💬 Apakah hasil ini sesuai?")
+        feedback = st.radio("Pilih jawaban:", ["Ya", "Tidak"])
+
+        if st.button("Kirim Feedback"):
+            timestamp = datetime.now(timezone.utc)
+            comment_count = len(df)
+            feedback_value = feedback
+
+            collection = get_collection("user_feedback")
+            collection.update_one(
+                {"timestamp": {"$exists": True}},  # Sesuaikan filternya
+                {"$set": {"feedback.user_feedback": feedback_value}}
+            )
+            st.success("Terima kasih atas feedback Anda!")
+

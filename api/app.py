@@ -6,7 +6,7 @@ import src.data.fetch_youtube as fetch
 import src.models.sentiment_analysis as sentiment
 import src.data.preprocess as preprocess
 import pandas as pd
-
+from src.data.db import get_collection
 
 app = FastAPI()
 
@@ -89,3 +89,19 @@ def analyze_youtube_video(request: VideoRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+def save_sentiment_to_mongo(comments):
+    collection = get_collection()
+
+    payload = {
+        "comments": [
+            {
+                "text": comment["comment"],
+                "label": comment["label"],
+                "confidence": comment["confidence"]
+            } for comment in comments
+        ]
+    }
+
+    result = collection.insert_one(payload)
+    print(f"💾 Data berhasil disimpan ke MongoDB dengan ID: {result.inserted_id}")

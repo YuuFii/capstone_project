@@ -10,6 +10,11 @@ import re
 from collections import Counter
 import mlflow
 import logging
+import psutil
+from datetime import datetime, timezone
+import time
+from src.data.db import get_collection
+from src.evaluation.metrics_collector import calculate_model_metrics, measure_performance, log_system_metrics
 
 logging.basicConfig(
     filename='logs/sentiment_analysis.log',
@@ -78,6 +83,8 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
 
     # 3. Inisialisasi Pipeline Sentimen
     try:
+        start_time = time.time()
+
         # 4. Analisis Sentimen dengan Progress Bar
         tqdm.pandas(desc="Analyzing Sentiment")
         data['sentiment_result'] = data['clean_text'].progress_apply(predict_sentiment)
@@ -87,6 +94,11 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
         ).fillna({'label': 'neutral', 'confidence': 0.0})
 
         data.drop(columns=['sentiment_result'], inplace=True)
+
+        duration = time.time() - start_time
+        throughput = len(data) / duration if duration > 0 else 0
+
+        save_sentiment_to_mongo(data.to_dict(orient='records'))
         
         # # Save model
         # model_dir = "models/sentiment_model"
@@ -97,6 +109,17 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
         sentiment_counts = data['sentiment'].value_counts(normalize=True) * 100
         print("\nSentiment Distribution (%):")
         print(sentiment_counts)
+
+        model_metrics = calculate_model_metrics(data)
+
+        perf_metrics = {
+            "latency": duration,
+            "throughput": throughput,
+            "cpu_usage": psutil.cpu_percent(interval=None),
+            "memory_usage": psutil.virtual_memory().percent
+        }
+
+        log_system_metrics(model_metrics, perf_metrics)
 
         # Generate summary
         summary = generate_contextual_summary(data)
@@ -118,14 +141,14 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
             for label, value in sentiment_counts.items():
                 mlflow.log_metric(f"percentage_{label}", value)
 
-            # summary = {
-            #     "total_comments": len(data),
-            #     "positive_comments": len(data[data['sentiment'] == 'positive']),
-            #     "neutral_comments": len(data[data['sentiment'] == 'neutral']),
-            #     "negative_comments": len(data[data['sentiment'] == 'negative'])
-            # }
+            summary = {
+                "total_comments": len(data),
+                "positive_comments": len(data[data['sentiment'] == 'positive']),
+                "neutral_comments": len(data[data['sentiment'] == 'neutral']),
+                "negative_comments": len(data[data['sentiment'] == 'negative'])
+            }
 
-            # mlflow.log_dict(summary, "summary.json")
+            mlflow.log_dict(summary, "summary.json")
 
             mlflow.log_artifact(summary_path, artifact_path="summary")
             
@@ -150,6 +173,15 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
     except Exception as e:
         logging.error(f"Error during sentiment analysis: {str(e)}")
         print(f"An error occurred: {str(e)}")
+
+        # Jika error, simpan metrik dengan error_rate = 1
+        log_system_metrics({"avg_confidence": 0.0, "sentiment_distribution": {}}, {
+            "latency": 0,
+            "throughput": 0,
+            "cpu_usage": 0,
+            "memory_usage": 0
+        })
+
         return None
     
 def extract_top_words(text_series, n=5):
@@ -224,7 +256,6 @@ def visualize_sentiment(df, output_dir="results/visualizations"):
 
     print("📊 Visualisasi selesai.")
 
-
 def generate_wordcloud(text, save_path, title="Word Cloud"):
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
     
@@ -235,6 +266,24 @@ def generate_wordcloud(text, save_path, title="Word Cloud"):
     plt.tight_layout(pad=0)
     plt.savefig(save_path)
     plt.close()
+
+def save_sentiment_to_mongo(comments):
+    collection = get_collection("analysis_results")
+    
+    payload = {
+        "timestamp": datetime.now(timezone.utc),
+        "comments": [
+            {
+                "text": comment["comment"],
+                "label": comment["label"],
+                "confidence": comment["confidence"]
+            } for comment in comments
+        ]
+    }
+
+    result = collection.insert_one(payload)
+    print(f"💾 Data disimpan ke MongoDB dengan ID: {result.inserted_id}")
+
 
 if __name__ == "__main__":
     # Example usage

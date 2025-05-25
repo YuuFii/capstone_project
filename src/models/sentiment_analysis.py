@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 import time
 from src.data.db import get_collection
 from src.evaluation.metrics_collector import calculate_model_metrics, measure_performance, log_system_metrics
+from src.evaluation.metrics_collector import confidence_score, positive_comments, negative_comments, neutral_comments, analysis_counter, latency_histogram
 
 logging.basicConfig(
     filename='logs/sentiment_analysis.log',
@@ -118,6 +119,15 @@ def analyze_sentiment(input_path='data/youtube_comments_id_cleaned.csv', output_
             "cpu_usage": psutil.cpu_percent(interval=None),
             "memory_usage": psutil.virtual_memory().percent
         }
+
+        sentiment_counts = data['sentiment'].value_counts()
+        positive_comments.set(sentiment_counts.get('positive', 0))
+        negative_comments.set(sentiment_counts.get('negative', 0))
+        neutral_comments.set(sentiment_counts.get('neutral', 0))
+
+        confidence_score.set(model_metrics['avg_confidence'])
+        latency_histogram.observe(duration)
+        analysis_counter.inc()
 
         log_system_metrics(model_metrics, perf_metrics)
 

@@ -6,9 +6,13 @@ import src.data.fetch_youtube as fetch
 import src.models.sentiment_analysis as sentiment
 import src.data.preprocess as preprocess
 import pandas as pd
+from starlette_exporter import PrometheusMiddleware, handle_metrics
 from src.data.db import get_collection
 
 app = FastAPI()
+
+app.add_middleware(PrometheusMiddleware)
+app.add_route("/metrics", handle_metrics)
 
 class CommentRequest(BaseModel):
     text: str

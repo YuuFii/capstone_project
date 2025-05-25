@@ -99,73 +99,85 @@ with tab2:
 with tab3:
     st.subheader("📊 Visualisasi Hasil Analisis Sentimen")
 
-    if 'analysis_data' not in st.session_state:
-        st.warning("Belum ada data analisis. Lakukan analisis terlebih dahulu.")
-    else:
-        df = pd.DataFrame(st.session_state['analysis_data'])
+    try:
+        collection = get_collection("analysis_results")
+        
+        # Ambil semua dokumen (misalnya, bisa filter per video_id jika diperlukan)
+        results = list(collection.find({}))  # Query semua hasil analisis
 
-        # Tampilkan summary
-        st.markdown("### 📝 Ringkasan Kontekstual")
-        summary_path = "results/summary.txt"
-
-        if os.path.exists(summary_path):
-            with open(summary_path, "r") as f:
-                summary = f.read()
-            st.info(summary)
+        if not results:
+            st.warning("Belum ada data hasil analisis di database.")
         else:
-            st.warning("Tidak ada ringkasan tersedia.")
+            all_comments = []
+            for result in results:
+                all_comments.extend(result.get("comments", []))
 
-        # Tampilkan sampel data
-        st.markdown("### 🔍 Sampel Data")
-        st.write(df.head())
+            df = pd.DataFrame(all_comments)
 
-        # Distribusi Sentimen (Pie Chart) di dalam kolom
-        st.markdown("### 📈 Distribusi Sentimen")
-        col1, col2 = st.columns([2, 2])  # Buat dua kolom untuk layout yang lebih rapi
+            # Tampilkan summary
+            st.markdown("### 📝 Ringkasan Kontekstual")
+            summary_path = "results/summary.txt"
 
-        with col1:
-            sentiment_counts = df['label'].value_counts()
-            fig, ax = plt.subplots(figsize=(4, 4))  # Ukuran figure diperkecil
-            ax.pie(sentiment_counts, labels=sentiment_counts.index, autopct='%1.1f%%', startangle=90,
-                   colors=['green', 'gray', 'red'])
-            ax.axis('equal')
-            st.pyplot(fig, use_container_width=True)
+            if os.path.exists(summary_path):
+                with open(summary_path, "r") as f:
+                    summary = f.read()
+                st.info(summary)
+            else:
+                st.warning("Tidak ada ringkasan tersedia.")
 
-        # Word Cloud di dalam kolom
-        with col2:
-            st.markdown("### ☁️ Word Cloud Komentar")
-            text_all = ' '.join(df['comment'].astype(str).str.lower().tolist())
-            stop_words = set(stopwords.words('indonesian'))
+            # Tampilkan sampel data
+            st.markdown("### 🔍 Sampel Data")
+            st.write(df.head())
 
-            wordcloud = WordCloud(width=400, height=200, background_color='white',
-                                  stopwords=stop_words).generate(text_all)  # Ukuran diperkecil
+            # Distribusi Sentimen (Pie Chart) di dalam kolom
+            st.markdown("### 📈 Distribusi Sentimen")
+            col1, col2 = st.columns([2, 2])  # Buat dua kolom untuk layout yang lebih rapi
 
-            plt.figure(figsize=(6, 3))  # Figure lebih kecil
-            plt.imshow(wordcloud, interpolation='bilinear')
-            plt.axis("off")
-            st.pyplot(plt, use_container_width=True)
+            with col1:
+                sentiment_counts = df['label'].value_counts()
+                fig, ax = plt.subplots(figsize=(4, 4))  # Ukuran figure diperkecil
+                ax.pie(sentiment_counts, labels=sentiment_counts.index, autopct='%1.1f%%', startangle=90,
+                       colors=['green', 'gray', 'red'])
+                ax.axis('equal')
+                st.pyplot(fig, use_container_width=True)
 
-        # Filter komentar berdasarkan label sentimen
-        st.markdown("### 🔎 Lihat Komentar Berdasarkan Sentimen")
-        selected_sentiment = st.selectbox("Pilih Sentimen", df['label'].unique(), key="vis_sentiment")
-        filtered_comments = df[df['label'] == selected_sentiment]['comment']
+            # Word Cloud di dalam kolom
+            with col2:
+                st.markdown("### ☁️ Word Cloud Komentar")
+                text_all = ' '.join(df['comment'].astype(str).str.lower().tolist())
+                stop_words = set(stopwords.words('indonesian'))
 
-        for comment in filtered_comments[:10]:  # Tampilkan maksimal 10 komentar
-            st.markdown(f"- {comment}")
+                wordcloud = WordCloud(width=400, height=200, background_color='white',
+                                      stopwords=stop_words).generate(text_all)
 
-        # Feedback pengguna
-        st.markdown("### 💬 Apakah hasil ini sesuai?")
-        feedback = st.radio("Pilih jawaban:", ["Ya", "Tidak"])
+                plt.figure(figsize=(6, 3))  # Figure lebih kecil
+                plt.imshow(wordcloud, interpolation='bilinear')
+                plt.axis("off")
+                st.pyplot(plt, use_container_width=True)
 
-        if st.button("Kirim Feedback"):
-            timestamp = datetime.now(timezone.utc)
-            comment_count = len(df)
-            feedback_value = feedback
+            # Filter komentar berdasarkan label sentimen
+            st.markdown("### 🔎 Lihat Komentar Berdasarkan Sentimen")
+            selected_sentiment = st.selectbox("Pilih Sentimen", df['label'].unique(), key="vis_sentiment")
+            filtered_comments = df[df['label'] == selected_sentiment]['comment']
 
-            collection = get_collection("user_feedback")
-            collection.update_one(
-                {"timestamp": {"$exists": True}},  # Sesuaikan filternya
-                {"$set": {"feedback.user_feedback": feedback_value}}
-            )
-            st.success("Terima kasih atas feedback Anda!")
+            for comment in filtered_comments[:10]:  # Tampilkan maksimal 10 komentar
+                st.markdown(f"- {comment}")
 
+            # Feedback pengguna
+            st.markdown("### 💬 Apakah hasil ini sesuai?")
+            feedback = st.radio("Pilih jawaban:", ["Ya", "Tidak"])
+
+            if st.button("Kirim Feedback"):
+                timestamp = datetime.now(timezone.utc)
+                comment_count = len(df)
+                feedback_value = feedback
+
+                collection = get_collection("user_feedback")
+                collection.update_one(
+                    {"timestamp": {"$exists": True}},  # Sesuaikan filternya
+                    {"$set": {"feedback.user_feedback": feedback_value}}
+                )
+                st.success("Terima kasih atas feedback Anda!")
+                
+    except Exception as e:
+        st.error(f"Gagal mengambil data dari MongoDB: {e}")

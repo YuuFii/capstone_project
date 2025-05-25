@@ -31,7 +31,11 @@ uvicorn
 pydantic
 typing
 
+pymongo
+
 wordcloud
 streamlit
+prometheus-client
+starlette-exporter
 
 requests

@@ -3,7 +3,15 @@ import psutil
 import numpy as np
 import pandas as pd
 from datetime import datetime, timezone
+from prometheus_client import Histogram, Gauge, Counter
 from src.data.db import get_collection
+
+confidence_score = Gauge('sentiment_avg_confidence', 'Rata-rata confidence score')
+positive_comments = Gauge('sentiment_positive_count', 'Jumlah komentar positif')
+negative_comments = Gauge('sentiment_negative_count', 'Jumlah komentar negatif')
+neutral_comments = Gauge('sentiment_neutral_count', 'Jumlah komentar netral')
+analysis_counter = Counter('sentiment_analysis_total', 'Total analisis dilakukan')
+latency_histogram = Histogram('sentiment_analysis_latency_seconds', 'Latensi analisis sentimen')
 
 def calculate_model_metrics(df):
     df = pd.DataFrame(df)
